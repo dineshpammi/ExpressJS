@@ -2,16 +2,6 @@ const express = require('express')
 const router = express.Router()
 const Customer = require('../models/customers')
 
-//get all customers
-// router.get('/', async (req, res) => {
-//     try {
-//         const customers = await Customer.find()
-//         res.json(customers)
-//     }
-//     catch (err) {
-//         res.send(err)
-//     }
-// })
 
 //get customers by id
 router.get('/:id', async (req, res) => {
