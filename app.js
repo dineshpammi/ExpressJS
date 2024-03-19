@@ -11,5 +11,8 @@ app.use(express.json())
 const customerRouter = require('./routers/customers')   //add individual modules for routing
 app.use('/customer', customerRouter)  //create a path to module
 
+const userRouter = require('./routers/users')
+app.use('/user', userRouter)
+
 app.listen(9000, () => { console.log('server started'); })  //inform server where to listen
 
