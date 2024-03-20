@@ -2,7 +2,8 @@ const express = require('express')
 const router = express.Router()
 const User = require('../models/users')
 const bcrypt = require('bcrypt');
-
+const jwt = require("jsonwebtoken");
+const secretKey = "useAnySecretTokenHere";
 //post user
 router.post('/signup', async (req, res) => {
     // const newUser = new User(req.body) //or we can use {name:req.body.name}
@@ -29,7 +30,11 @@ router.post('/login', async (req, res) => {
             throw new UnauthorizedException('Invalid email or password')
         }
         else {
-            res.json(user)
+            jwt.sign({ user: user }, secretKey, (err, token) => {
+                res.json({ user: user, authToken: token })
+            }, err => {
+                throw new UnauthorizedException('Invalid email or password')
+            })
         }
     }
     catch (err) {
@@ -38,11 +43,16 @@ router.post('/login', async (req, res) => {
 })
 
 //get user by id with headers 
-router.get('/user', async (req, res) => {
-    const { limit, skip } = req.query;
+router.get('/', async (req, res) => {
     try {
-        const users = await User.find()
-        res.json(users)
+        const userID = req.userId
+        if (userID) {
+            const user = await User.findById(userID)
+            res.json(user)
+        }
+        else {
+            return res.status(403).json({ message: 'Failed to authenticate token' });
+        }
     }
     catch (err) {
         res.status(404).json({ message: "No user found" });

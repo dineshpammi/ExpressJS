@@ -29,6 +29,7 @@ router.get('/', async (req, res) => {
 //post customer
 router.post('/', async (req, res) => {
     const newCustomer = new Customer(req.body) //or we can use {name:req.body.name}
+    newCustomer['createdBy'] = req.userId//gets user details from middleware 
     try {
         const savedCustomer = await newCustomer.save()
         res.json(savedCustomer)
