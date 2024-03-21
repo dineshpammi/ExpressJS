@@ -2,8 +2,9 @@ const express = require('express')
 const mongoose = require('mongoose')
 const url = 'mongodb://127.0.0.1/crud-express' //db connection
 const app = express();
-const secretKey = "useAnySecretTokenHere";
 const jwt = require("jsonwebtoken");
+require('dotenv').config()
+const secretKey = process.env.SECRET_KEY;
 
 const myMiddleware = (req, res, next) => {
     const token = req.headers.authorization;
@@ -19,7 +20,9 @@ const myMiddleware = (req, res, next) => {
                 return res.status(403).json({ message: 'Failed to authenticate token' });
             }
             const userID = decoded.user._id
-            req.userId = userID
+            req.userId = userID;
+            req.user = decoded.user
+            req.token = idToken
         });
         next();
     }
@@ -41,5 +44,5 @@ app.use('/customer', customerRouter)  //create a path to module
 // app.use(myMiddleware);
 const userRouter = require('./routers/users')
 app.use('/user', userRouter)
-app.listen(9000, () => { console.log('server started'); })  //inform server where to listen
+app.listen(process.env.PORT, () => { console.log('server started'); })  //inform server where to listen
 

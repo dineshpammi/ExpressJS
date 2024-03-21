@@ -3,7 +3,9 @@ const router = express.Router()
 const User = require('../models/users')
 const bcrypt = require('bcrypt');
 const jwt = require("jsonwebtoken");
-const secretKey = "useAnySecretTokenHere";
+require('dotenv').config()
+const secretKey = process.env.SECRET_KEY;
+
 //post user
 router.post('/signup', async (req, res) => {
     // const newUser = new User(req.body) //or we can use {name:req.body.name}
@@ -30,17 +32,37 @@ router.post('/login', async (req, res) => {
             throw new UnauthorizedException('Invalid email or password')
         }
         else {
-            jwt.sign({ user: user }, secretKey, (err, token) => {
-                res.json({ user: user, authToken: token })
-            }, err => {
-                throw new UnauthorizedException('Invalid email or password')
-            })
+            const authToken = generateAccessToken(user);
+            const refreshToken = generateRefreshToken(user);
+            res.json({ user: user, authToken: authToken, refreshToken: refreshToken })
+
+            // jwt.sign({ user: user }, secretKey, { expiresIn: process.env.EXPIRES_ON }, (err, token) => {
+            //     res.json({ user: user, authToken: token })
+            // }, err => {
+            //     throw new UnauthorizedException('Invalid email or password')
+            // })
         }
     }
     catch (err) {
         res.status(400).json({ message: "Invalid credentials" });
     }
 })
+
+// Generate access token
+const generateAccessToken = (user) => {
+    try { return jwt.sign({ user: user }, secretKey, { expiresIn: process.env.EXPIRES_ON }); }
+    catch (err) {
+        throw new UnauthorizedException('Invalid email or password')
+    }
+};
+
+// Generate refresh token
+const generateRefreshToken = (user) => {
+    try { return jwt.sign({ user: user }, secretKey); }
+    catch (err) {
+        throw new UnauthorizedException('Invalid email or password')
+    }
+};
 
 //get user by id with headers 
 router.get('/', async (req, res) => {
@@ -58,5 +80,22 @@ router.get('/', async (req, res) => {
         res.status(404).json({ message: "No user found" });
     }
 })
+
+//update refresh token
+router.post('/refresh-token', async (req, res) => {
+    const refreshToken = req.body.refreshToken;
+    if (!refreshToken) {
+        return res.sendStatus(401);
+    }
+
+    jwt.verify(refreshToken, secretKey, (err, user) => {
+        if (err) {
+            return res.sendStatus(403);
+        }
+        const authToken = generateAccessToken(req.user);
+        res.json({ authToken: authToken })
+    });
+})
+
 
 module.exports = router
